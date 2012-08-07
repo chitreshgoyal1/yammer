@@ -1,0 +1,48 @@
+body {
+	background: beige;
+}
+
+
+div .message_and_children {
+background: lightblue;
+border: 1px solid black;
+padding: 3px;
+margin: 3px;
+}
+
+div .single_message{
+	min-height: 68px;
+
+}
+
+div .message_contents{
+	margin-left: 68px;
+	/*border: 1px solid black; */
+}
+
+div .userimg {
+float: left;
+padding-right: 5px;
+
+}
+
+
+div .username {
+	font-family: sans-serif;
+	font-weight: bold;
+
+}
+
+div .message_date{
+	font-style: italic;
+	font-size: .8em;
+
+}
+
+.user_image{
+	width: 60px;
+}
+
+.user_delete{
+	width: 60px;
+}
