@@ -16,8 +16,8 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script>
   //var _secret_consumer_key = '9mLJwel3rlJoDdvhM3q63Q';
-  // SETTINGS HERE!
-  	var timeout_ms = 10000
+	// SETTINGS HERE!
+  	var timeout_ms = 500
 	var messageLimit = 100;  
 	var searchHashtag = "#dashboard"
 	var consumerKey = _secret_consumer_key; // this is the only use of PHP in this app, you could hard-code the key if you wanted.
@@ -30,7 +30,9 @@
 	var popH;
 	var inRequest = false;
 	var started  = false;
-
+	var oldLength = 0;
+	var allstring = " ";
+	var threadText = " ";  // messages are append one by one
 	var userData = {};	
 	var link_window = null;
 	var thisPageData = {};
@@ -45,7 +47,7 @@
 	$("#main_div").append("<br>browser : " + window.outerWidth + " , " + window.outerHeight + " : position: " + window.screenX + " , " + window.screenY );
 
 	$(".clickhere").click(function(){
-		//alert("clicked");
+		//console.log("clicked");
 		if(started){
 			return;
 		}
@@ -80,7 +82,7 @@
 			zone = "right";
 			max = areaRight;
 		}		
-//		alert("b" + areaBelow + " a " + areaAbove + " r " + areaRight + " l " + areaLeft + "zone " + zone);
+//		console.log("b" + areaBelow + " a " + areaAbove + " r " + areaRight + " l " + areaLeft + "zone " + zone);
 		if(zone =="below"){
 			popX = 0;
 			popY = screen.height - sizeBelow;
@@ -106,20 +108,20 @@
 
 		yam.getLoginStatus( function(response) {
 		  if (response.authResponse) {    
-			//alert("not logged");
+			//console.log("not logged");
 			// logged in and connected user, someone you know?  
 		  } else { 
-			//alert("logged in");
-			// no user session available, someone you don?t know
+			//console.log("logged in");
+			// no user session available, someone you dont know
 		  }  
 		});		
 
 		yam.login( function (response) {
 		  if (response.authResponse) {  
-			//alert("good login");
+			//console.log("good login");
 			// user successfully logged in? 
 		  } else {
-			//alert("bad login");
+			//console.log("bad login");
 			// user cancelled login?  
 		  }
 		});
@@ -152,17 +154,33 @@
 		  , success: function (msgs) { 
 			var string = "";			
 			var length = msgs.messages.messages.length;     //msgs.messages.length; if url different
-			var i= 0;
-			doMessages(msgs, length, i);
-			inRequest = false;
+			
+			if(oldLength > length){							//checking previous message length with current
+				var i = length;
+				length = oldLength;
+				doMessages(msgs, length, i);
+				inRequest = false;	
+			}
+			else if(oldLength == 0){						//for first time
+				var i = 0;
+				doMessages(msgs, length, i);
+				inRequest = false;
+			}
+			else{
+				//alert(length);
+				setTimeout("doRequest()", 10000);			//auto request for new posts
+			}
+			
+			
 		  }
-		  , error: function (msg) { alert("Data Not Saved: " + msg); }
+		  , error: function (msg) { console.log("Data Not Saved: " + msg); }
 		  }
 	); 
   }
   
 
 	function doMessages(msgs, length, i){
+		//alert("undefined" + i + "length"+ length);
 		var msg = msgs.messages.messages[i];              //msgs.messages[i]; if url different
 		var num_attach = 0;
 		// links might be in a few different places in the returned json.
@@ -212,20 +230,20 @@
 				doThreads(thread_id, threads, threadlen, j);
 			  }
 			  , error: function (msg) {
-			  alert("thread Data Not Saved: " + msg); 
+			  console.log("thread Data Not Saved: " + msg); 
 			  }
 			}
 		);		
 
 
 		i++;
-		//alert(length);
+
 		if(i < length){
-			//doMessages(msgs, length, i);
 			setTimeout(function(){doMessages(msgs, length, i)}, timeout_ms);
 		}else{
-			//doRequest();
-			setTimeout("doRequest()", timeout_ms);
+			oldLength = length;			//Assign current length to old length variable			
+			doRequest();
+			//setTimeout("doRequest()", timeout_ms);
 
 		}
 	}
@@ -247,7 +265,8 @@
 			}
 		});
 
-		var threadText = buildThreadText(threadArray, root_id, 1);
+		threadText += buildThreadText(threadArray, root_id, 1);
+												console.log(threadText);  // Check on console how messages are append
 		$("#main_div").html(threadText);
 	}
 
@@ -267,13 +286,15 @@
 			userNameString= formatUserName(user);
 			userImgString= formatUserImage(user);
 		}
-				
+				console.log(thisMessage);
 		var string = "\n<div class='message_and_children depth"+depth+"'><div class='single_message'>"+
 					prepend+"\n<div class='user userimg "+userdivclass + "img'>"+userImgString+
 					"</div><div class='message_contents'><div class='user username "+userdivclass+"name'>"
 					+userNameString+"</div>\n<div class='message_text'>" 
-					+thisMessage.body.rich+"</div><div class='message_date'>created: "+message_date+"</div></div>";
-			string += '<img alt=\'Delete\' src=\'close.png\' style=\'vertical-align: top; float: right;\' onclick= \'delete_message(\"' + thisMessage.url + '\")\'></div>';
+					+thisMessage.body.rich+"</div><div class='message_date'>created: "+message_date+"</div></div>";		
+		string += '<img src=\'like.png\' >&nbsp;'+ thisMessage.liked_by.count;
+		string += '<img alt=\'Delete\' src=\'close.png\' style=\'vertical-align: top; float: right;\' onclick= \'delete_message(\"' + thisMessage.url + '\")\' ></div>';
+
 		thisMessage.children.sort(function(a,b){
 			var date1 = new Date(threadArray[a].created_at);
 			var date2 = new Date(threadArray[b].created_at);
@@ -305,7 +326,7 @@
 					console.log(placeUserData(user, div_class));
 				  }
 				  , error: function (msg) {
-				  alert("user Data Not Saved: " + msg); 
+				  console.log("user Data Not Saved: " + msg); 
 				  }
 				}
 			);		
@@ -330,8 +351,6 @@
 	function formatUserName(user){
 		var string = "";
 		string += user.full_name+":";
-		
-
 		return string;	
 	}	
 
@@ -368,8 +387,8 @@
               	url: "https://www.yammer.com/api/v1/messages.json"
               , method: "POST"
               , data: { "body" : data_post}
-              , success: function (msg) { alert("Post was Successful!: " + msg); }
-              , error: function (msg) { alert("Post was Unsuccessful..." + msg); }
+              , success: function (msg) { console.log("Post was Successful!: " + msg); }
+              , error: function (msg) { console.log("Post was Unsuccessful..." + msg); }
             } );
         } else {
             yam.login( function (response) {
@@ -378,8 +397,8 @@
                   	url: "https://www.yammer.com/api/v1/messages.json"
                   , method: "POST"
                   , data: { "body" : data_post}
-                  , success: function (msg) { alert("Post was Successful!: " + msg); }
-                  , error: function (msg) { alert("Post was Unsuccessful..." + msg); }
+                  , success: function (msg) { console.log("Post was Successful!: " + msg); }
+                  , error: function (msg) { console.log("Post was Unsuccessful..." + msg); }
                 });
               }
             });
@@ -396,8 +415,8 @@
 	            yam.request({ 
 	              	url: geturl
 	              , method: "DELETE"
-	              , success: function (msg) { alert("Post was Successfully deleted!: "); }
-	              , error: function (msg) { alert("Warning..."); }
+	              , success: function (msg) { console.log("Post was Successfully deleted!: "); }
+	              , error: function (msg) { console.log("Warning..."); }
 	            } );
 	        } 
 	        else {
@@ -406,8 +425,8 @@
 	                yam.request( { 
 	                  	url: geturl
 	                  , method: "DELETE"
-	                  , success: function (msg) { alert("Post was Successfully deleted!: "); }
-	                  , error: function (msg) { alert("Warning..."); }
+	                  , success: function (msg) { console.log("Post was Successfully deleted!: "); }
+	                  , error: function (msg) { console.log("Warning..."); }
 	                });
 	              }
 	            });
