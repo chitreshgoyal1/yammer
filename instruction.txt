@@ -9,3 +9,30 @@ Search Wall post using #hashtag from yammer wall, and show on website's wall ex.
 Show count of Like for Post.
 Delete Wall post from our website ( post automatically deleted from yammer's wall).
 --Chitresh Goyal
+
+
+How To:
+
+Step 1:
+  Make an account on Yammer and Login
+  In new tab open this https://www.yammer.com/client_applications/new     and register
+  Copy fields:
+    1. Consumer Key
+    2. Consumer Secret Key
+    3. Request token Url
+    4. Access token Url
+    5. Authorize Url
+    6. Call Back Url (not mendatory)
+
+Step 2:
+  Generate Oauth Token, Oauth Secret
+  open this https://developer.yammer.com/api/sandbox.html
+  click on permanent api key and varify it ( get code from new tab and paste )
+
+Step 3:
+  Replace consumer key in secret.js file
+
+Step 4:
+  Run in any browser (IE best compatible)
+
+Note: if it doesn't work than see console in browser for error (press F12 Key)
